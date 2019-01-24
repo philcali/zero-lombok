@@ -11,8 +11,10 @@
   <url>http://maven.apache.org</url>
   <modules>
     <module>lombok-annotation</module>
-    <module>lombok-processor</module>
     <module>lombok-example</module>
+    <module>lombok-processor</module>
+    <module>lombok-processor-template</module>
+    <module>lombok-processor-template-handlebars</module>
   </modules>
 
   <properties>
