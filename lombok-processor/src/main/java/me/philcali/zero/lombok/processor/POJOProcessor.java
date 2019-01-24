@@ -39,29 +39,29 @@ public class POJOProcessor extends AbstractProcessor {
         this.log = processingEnv.getMessager();
     }
 
-	@Override
-	public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
-		for (final TypeElement annotation : annotations) {
-		    log.printMessage(Kind.NOTE, "Processing annotation: ", annotation);
-		    final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(annotation);
-		    elements.stream().filter(this::isInterface).forEach(element -> {
-		        log.printMessage(Kind.NOTE, "Found annotated element: ", element);
-		        createDataObject((TypeElement) element, annotation);
-		    });
-		}
-	    return true;
-	}
+    @Override
+    public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
+        for (final TypeElement annotation : annotations) {
+            log.printMessage(Kind.NOTE, "Processing annotation: ", annotation);
+            final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(annotation);
+            elements.stream().filter(this::isInterface).forEach(element -> {
+                log.printMessage(Kind.NOTE, "Found annotated element: ", element);
+                createDataObject((TypeElement) element, annotation);
+            });
+        }
+        return true;
+    }
 
-	private boolean isInterface(final Element element) {
-	    return element.getKind() == ElementKind.INTERFACE;
-	}
+    private boolean isInterface(final Element element) {
+        return element.getKind() == ElementKind.INTERFACE;
+    }
 
-	private void createDataObject(final TypeElement element, final TypeElement annotation) {
-	    final String className = String.format("%sData", element.getQualifiedName());
-	    final int lastDot = className.lastIndexOf('.');
-	    final String packageName = className.substring(0, lastDot);
-	    final String simpleName = className.substring(lastDot + 1);
-	    try {
+    private void createDataObject(final TypeElement element, final TypeElement annotation) {
+        final String className = String.format("%sData", element.getQualifiedName());
+        final int lastDot = className.lastIndexOf('.');
+        final String packageName = className.substring(0, lastDot);
+        final String simpleName = className.substring(lastDot + 1);
+        try {
             final JavaFileObject object = processingEnv.getFiler().createSourceFile(className, element);
             try (PrintWriter writer = new PrintWriter(object.openWriter())) {
                 // Class definition
@@ -71,10 +71,10 @@ public class POJOProcessor extends AbstractProcessor {
                 writer.println("public class " + simpleName + " implements " + element.getSimpleName() + " {");
 
                 final Map<String, ExecutableElement> methods = element.getEnclosedElements().stream()
-                        .filter(method -> method.getKind() == ElementKind.METHOD)
-                        .map(e -> (ExecutableElement) e)
+                        .filter(method -> method.getKind() == ElementKind.METHOD).map(e -> (ExecutableElement) e)
                         .collect(Collectors.toMap(
-                                e -> applyCase(Character::toLowerCase, e.getSimpleName().toString().replaceAll("^(get|is)", "")),
+                                e -> applyCase(Character::toLowerCase,
+                                        e.getSimpleName().toString().replaceAll("^(get|is)", "")),
                                 Function.identity()));
 
                 // Standard pojo
@@ -93,21 +93,22 @@ public class POJOProcessor extends AbstractProcessor {
         } catch (IOException e) {
             log.printMessage(Kind.ERROR, e.getMessage(), element);
         }
-	}
+    }
 
-	private void printFields(
-	        final PrintWriter writer,
-	        final Map<String, ExecutableElement> methods,
-	        final String methodPrefix,
-	        final String returnType,
-	        final boolean getters) {
-	    methods.forEach((name, method) -> {
+    private void printFields(
+            final PrintWriter writer,
+            final Map<String, ExecutableElement> methods,
+            final String methodPrefix,
+            final String returnType,
+            final boolean getters) {
+        methods.forEach((name, method) -> {
             writer.println("    private " + method.getReturnType().toString() + " " + name + ";");
             writer.println();
 
             if (getters) {
                 writer.println("    @Override");
-                writer.println("    public " + method.getReturnType().toString() + " " + method.getSimpleName() + "() {");
+                writer.println(
+                        "    public " + method.getReturnType().toString() + " " + method.getSimpleName() + "() {");
                 writer.println("        return " + name + ";");
                 writer.println("    }");
                 writer.println();
@@ -117,49 +118,59 @@ public class POJOProcessor extends AbstractProcessor {
                     .filter(other -> !method.getSimpleName().toString().equals(other))
                     .map(other -> methodPrefix + applyCase(Character::toUpperCase, other))
                     .orElse(name);
-            writer.println("    public " + returnType + " " + upperCased + "(final " + method.getReturnType().toString() + " " + name + ") {");
+            writer.println("    public " + returnType + " " + upperCased + "(final " + method.getReturnType().toString()
+                    + " " + name + ") {");
             writer.println("        this." + name + " = " + name + ";");
             writer.println("        return this;");
             writer.println("    }");
             writer.println();
         });
-	}
+    }
 
-	private void printEquals(final PrintWriter writer, final TypeElement element, final Map<String, ExecutableElement> methods) {
+    private void printEquals(
+            final PrintWriter writer,
+            final TypeElement element,
+            final Map<String, ExecutableElement> methods) {
         writer.println("    @Override");
         writer.println("    public boolean equals(final Object object) {");
-        writer.println(String.format("        if (Objects.isNull(object) || !(object instanceof %s)) {", element.getSimpleName()));
+        writer.println(String.format("        if (Objects.isNull(object) || !(object instanceof %s)) {",
+                element.getSimpleName()));
         writer.println("            return false;");
         writer.println("        }");
-        writer.println(String.format("        final %s other = (%s) object;", element.getSimpleName(), element.getSimpleName()));
+        writer.println(String.format("        final %s other = (%s) object;", element.getSimpleName(),
+                element.getSimpleName()));
         final String fieldsEquals = methods.entrySet().stream().map(entry -> {
             return String.format("Objects.equals(%s, other.%s())", entry.getKey(), entry.getValue().getSimpleName());
         }).collect(Collectors.joining("\n            && "));
         writer.println("        return " + fieldsEquals + ";");
         writer.println("    }");
         writer.println();
-	}
+    }
 
-	private void printHashCode(final PrintWriter writer, final Map<String, ExecutableElement> methods) {
+    private void printHashCode(final PrintWriter writer, final Map<String, ExecutableElement> methods) {
         writer.println("    @Override");
         writer.println("    public int hashCode() {");
-        writer.println(String.format("        return Objects.hash(%s);", methods.keySet().stream()
-                .collect(Collectors.joining(", ")) ));
+        writer.println(String.format("        return Objects.hash(%s);",
+                methods.keySet().stream().collect(Collectors.joining(", "))));
         writer.println("    }");
         writer.println();
-	}
+    }
 
-	private void printToString(final PrintWriter writer, final String simpleName, final Map<String, ExecutableElement> methods) {
+    private void printToString(
+            final PrintWriter writer,
+            final String simpleName,
+            final Map<String, ExecutableElement> methods) {
         writer.println("    @Override");
         writer.println("    public String toString() {");
         writer.println(String.format("        return \"%s:[%s]\";", simpleName, methods.keySet().stream()
-                .map(name -> String.format("%s=\" + %s + \"", name, name))
-                .collect(Collectors.joining(", "))));
+                .map(name -> String.format("%s=\" + %s + \"", name, name)).collect(Collectors.joining(", "))));
         writer.println("    }");
-	}
+    }
 
-	private void printBuilder(final PrintWriter writer, final String simpleName, final Map<String, ExecutableElement> methods) {
-	    writer.println();
+    private void printBuilder(
+            final PrintWriter writer,final String simpleName,
+            final Map<String, ExecutableElement> methods) {
+        writer.println();
         writer.println("    public " + simpleName + "() {");
         writer.println("    }");
 
@@ -191,21 +202,21 @@ public class POJOProcessor extends AbstractProcessor {
         writer.println("            return new " + simpleName + "(this);");
         writer.println("        }");
         writer.println("    }");
-	}
+    }
 
-	private String applyCase(final Function<Character, Character> casing, final String name) {
-	    return casing.apply(name.charAt(0)) + name.substring(1);
-	}
+    private String applyCase(final Function<Character, Character> casing, final String name) {
+        return casing.apply(name.charAt(0)) + name.substring(1);
+    }
 
-	@Override
-	public Set<String> getSupportedAnnotationTypes() {
-	    final Set<String> supportedAnnotations = new HashSet<>();
-	    supportedAnnotations.add(Builder.class.getCanonicalName());
-	    return Collections.unmodifiableSet(supportedAnnotations);
-	}
+    @Override
+    public Set<String> getSupportedAnnotationTypes() {
+        final Set<String> supportedAnnotations = new HashSet<>();
+        supportedAnnotations.add(Builder.class.getCanonicalName());
+        return Collections.unmodifiableSet(supportedAnnotations);
+    }
 
-	@Override
-	public SourceVersion getSupportedSourceVersion() {
-	    return SourceVersion.latestSupported();
-	}
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
+    }
 }
