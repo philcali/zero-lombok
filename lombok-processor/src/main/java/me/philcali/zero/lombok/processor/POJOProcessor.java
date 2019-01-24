@@ -26,8 +26,12 @@ import javax.tools.JavaFileObject;
 
 import com.google.auto.service.AutoService;
 
+import me.philcali.zero.lombok.annotation.AllArgsConstructor;
 import me.philcali.zero.lombok.annotation.Builder;
-import me.philcali.zero.lombok.annotation.Required;
+import me.philcali.zero.lombok.annotation.Data;
+import me.philcali.zero.lombok.annotation.NoArgsConstructor;
+import me.philcali.zero.lombok.annotation.NonNull;
+import me.philcali.zero.lombok.annotation.RequiredArgsConstructor;
 
 @AutoService(Processor.class)
 public class POJOProcessor extends AbstractProcessor {
@@ -41,6 +45,7 @@ public class POJOProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
+        // Rethink this: perform the necessary collision detection
         for (final TypeElement annotation : annotations) {
             log.printMessage(Kind.NOTE, "Processing annotation: ", annotation);
             final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(annotation);
@@ -175,7 +180,7 @@ public class POJOProcessor extends AbstractProcessor {
         writer.println("    }");
 
         writer.println();
-        writer.println("    public " + simpleName + "(final Builder builder) {");
+        writer.println("    private " + simpleName + "(final Builder builder) {");
         methods.forEach((name, method) -> {
             writer.println("        this." + name + " = builder." + name + ";");
         });
@@ -191,7 +196,7 @@ public class POJOProcessor extends AbstractProcessor {
         printFields(writer, methods, "with", "Builder", false);
         writer.println("        public " + simpleName + " build() {");
         methods.forEach((name, method) -> {
-            final Required requiredMessage = method.getAnnotation(Required.class);
+            final NonNull requiredMessage = method.getAnnotation(NonNull.class);
             if (Objects.nonNull(requiredMessage)) {
                 final String message = Optional.ofNullable(requiredMessage.value())
                         .filter(m -> !m.isEmpty())
@@ -211,7 +216,11 @@ public class POJOProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         final Set<String> supportedAnnotations = new HashSet<>();
+        supportedAnnotations.add(AllArgsConstructor.class.getCanonicalName());
+        supportedAnnotations.add(NoArgsConstructor.class.getCanonicalName());
+        supportedAnnotations.add(RequiredArgsConstructor.class.getCanonicalName());
         supportedAnnotations.add(Builder.class.getCanonicalName());
+        supportedAnnotations.add(Data.class.getCanonicalName());
         return Collections.unmodifiableSet(supportedAnnotations);
     }
 

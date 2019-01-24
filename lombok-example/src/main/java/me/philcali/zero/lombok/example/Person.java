@@ -1,11 +1,11 @@
 package me.philcali.zero.lombok.example;
 
 import me.philcali.zero.lombok.annotation.Builder;
-import me.philcali.zero.lombok.annotation.Required;
+import me.philcali.zero.lombok.annotation.NonNull;
 
 @Builder
 public interface Person {
-    @Required
+    @NonNull
     String getName();
 
     int getAge();
