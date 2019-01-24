@@ -8,4 +8,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Builder {
+    enum Type {
+        FLUENT, SETTER;
+    }
+
+    Type value() default Type.FLUENT;
 }

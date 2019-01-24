@@ -20,7 +20,7 @@ public class TemplateEngineHandlebars implements TemplateEngine {
     }
 
     public TemplateEngineHandlebars() {
-        this(new Handlebars());
+        this(new Handlebars().with(new ClassPathTemplateLoader("/templates")));
     }
 
     @Override

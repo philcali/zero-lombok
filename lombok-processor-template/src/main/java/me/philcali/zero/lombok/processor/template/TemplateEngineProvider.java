@@ -1,7 +1,7 @@
 package me.philcali.zero.lombok.processor.template;
 
-import java.util.Optional;
+import me.philcali.zero.lombok.processor.template.exception.TemplateNotFoundException;
 
 public interface TemplateEngineProvider {
-    Optional<TemplateEngine> get(String templateId);
+    TemplateEngine get(String templateId) throws TemplateNotFoundException;
 }

@@ -2,8 +2,11 @@ package me.philcali.zero.lombok.processor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,6 +23,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
@@ -32,26 +36,38 @@ import me.philcali.zero.lombok.annotation.Data;
 import me.philcali.zero.lombok.annotation.NoArgsConstructor;
 import me.philcali.zero.lombok.annotation.NonNull;
 import me.philcali.zero.lombok.annotation.RequiredArgsConstructor;
+import me.philcali.zero.lombok.annotation.Template;
+import me.philcali.zero.lombok.processor.template.TemplateEngine;
+import me.philcali.zero.lombok.processor.template.TemplateEngineProvider;
+import me.philcali.zero.lombok.processor.template.TemplateEngineProviderSystem;
+import me.philcali.zero.lombok.processor.template.exception.TemplateNotFoundException;
 
 @AutoService(Processor.class)
 public class POJOProcessor extends AbstractProcessor {
+    private static final String DEFAULT_TEMPLATE = "generated-type";
     private Messager log;
+    private TemplateEngineProvider provider;
+    private Map<Name, Element> processedElements;
 
     @Override
     public synchronized void init(final ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         this.log = processingEnv.getMessager();
+        this.provider = new TemplateEngineProviderSystem(getClass().getClassLoader());
+        this.processedElements = new HashMap<>();
     }
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
-        // Rethink this: perform the necessary collision detection
         for (final TypeElement annotation : annotations) {
             log.printMessage(Kind.NOTE, "Processing annotation: ", annotation);
             final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(annotation);
             elements.stream().filter(this::isInterface).forEach(element -> {
                 log.printMessage(Kind.NOTE, "Found annotated element: ", element);
-                createDataObject((TypeElement) element, annotation);
+                if (!processedElements.containsKey(element.getSimpleName())) {
+                    createDataObject((TypeElement) element);
+                    processedElements.put(element.getSimpleName(), element);
+                }
             });
         }
         return true;
@@ -61,152 +77,84 @@ public class POJOProcessor extends AbstractProcessor {
         return element.getKind() == ElementKind.INTERFACE;
     }
 
-    private void createDataObject(final TypeElement element, final TypeElement annotation) {
+    private void createDataObject(final TypeElement element) {
         final String className = String.format("%sData", element.getQualifiedName());
-        final int lastDot = className.lastIndexOf('.');
-        final String packageName = className.substring(0, lastDot);
-        final String simpleName = className.substring(lastDot + 1);
+
         try {
+            final TemplateEngine engine = objectTemplate(element);
             final JavaFileObject object = processingEnv.getFiler().createSourceFile(className, element);
             try (PrintWriter writer = new PrintWriter(object.openWriter())) {
-                // Class definition
-                writer.println("package " + packageName + ";");
-                writer.println("import " + Objects.class.getCanonicalName() + ";");
-                writer.println();
-                writer.println("public class " + simpleName + " implements " + element.getSimpleName() + " {");
-
-                final Map<String, ExecutableElement> methods = element.getEnclosedElements().stream()
-                        .filter(method -> method.getKind() == ElementKind.METHOD).map(e -> (ExecutableElement) e)
-                        .collect(Collectors.toMap(
-                                e -> applyCase(Character::toLowerCase,
-                                        e.getSimpleName().toString().replaceAll("^(get|is)", "")),
-                                Function.identity()));
-
-                // Standard pojo
-                printFields(writer, methods, "set", simpleName, true);
-                // Equals
-                printEquals(writer, element, methods);
-                // HashCode
-                printHashCode(writer, methods);
-                // ToString
-                printToString(writer, simpleName, methods);
-                // Builder
-                printBuilder(writer, simpleName, methods);
-
-                writer.println("}");
+                writer.print(engine.apply(DEFAULT_TEMPLATE, generateContext(className, element)));
             }
-        } catch (IOException e) {
+        } catch (TemplateNotFoundException | IOException e) {
             log.printMessage(Kind.ERROR, e.getMessage(), element);
         }
     }
 
-    private void printFields(
-            final PrintWriter writer,
-            final Map<String, ExecutableElement> methods,
-            final String methodPrefix,
-            final String returnType,
-            final boolean getters) {
-        methods.forEach((name, method) -> {
-            writer.println("    private " + method.getReturnType().toString() + " " + name + ";");
-            writer.println();
+    private Object generateContext(final String className, final TypeElement element) {
+        final int lastDot = className.lastIndexOf('.');
+        final String packageName = className.substring(0, lastDot);
+        final String simpleName = className.substring(lastDot + 1);
 
-            if (getters) {
-                writer.println("    @Override");
-                writer.println(
-                        "    public " + method.getReturnType().toString() + " " + method.getSimpleName() + "() {");
-                writer.println("        return " + name + ";");
-                writer.println("    }");
-                writer.println();
+        final Map<String, ExecutableElement> methods = element.getEnclosedElements().stream()
+                .filter(method -> method.getKind() == ElementKind.METHOD).map(e -> (ExecutableElement) e)
+                .collect(Collectors.toMap(
+                        e -> applyCase(Character::toLowerCase, e.getSimpleName().toString().replaceAll("^(get|is)", "")),
+                        Function.identity()));
+
+        final Map<String, Object> context = new HashMap<>();
+
+        final Builder builder = element.getAnnotation(Builder.class);
+        if (Objects.nonNull(builder)) {
+            context.put("builder", true);
+        }
+
+        final List<Map<String, Object>> fields = new ArrayList<>();
+        methods.forEach((fieldName, method) -> {
+            final Map<String, Object> fieldContext = new HashMap<>();
+            fieldContext.put("fieldName", fieldName);
+            fieldContext.put("returnType", method.getReturnType().toString());
+            fieldContext.put("methodName", method.getSimpleName().toString());
+            if (fieldName.equals(method.getSimpleName().toString())) {
+                fieldContext.put("setterMethodName", fieldName);
+            } else {
+                fieldContext.put("setterMethodName", "set" + applyCase(Character::toUpperCase, fieldName));
             }
-
-            final String upperCased = Optional.ofNullable(name)
-                    .filter(other -> !method.getSimpleName().toString().equals(other))
-                    .map(other -> methodPrefix + applyCase(Character::toUpperCase, other))
-                    .orElse(name);
-            writer.println("    public " + returnType + " " + upperCased + "(final " + method.getReturnType().toString()
-                    + " " + name + ") {");
-            writer.println("        this." + name + " = " + name + ";");
-            writer.println("        return this;");
-            writer.println("    }");
-            writer.println();
-        });
-    }
-
-    private void printEquals(
-            final PrintWriter writer,
-            final TypeElement element,
-            final Map<String, ExecutableElement> methods) {
-        writer.println("    @Override");
-        writer.println("    public boolean equals(final Object object) {");
-        writer.println(String.format("        if (Objects.isNull(object) || !(object instanceof %s)) {",
-                element.getSimpleName()));
-        writer.println("            return false;");
-        writer.println("        }");
-        writer.println(String.format("        final %s other = (%s) object;", element.getSimpleName(),
-                element.getSimpleName()));
-        final String fieldsEquals = methods.entrySet().stream().map(entry -> {
-            return String.format("Objects.equals(%s, other.%s())", entry.getKey(), entry.getValue().getSimpleName());
-        }).collect(Collectors.joining("\n            && "));
-        writer.println("        return " + fieldsEquals + ";");
-        writer.println("    }");
-        writer.println();
-    }
-
-    private void printHashCode(final PrintWriter writer, final Map<String, ExecutableElement> methods) {
-        writer.println("    @Override");
-        writer.println("    public int hashCode() {");
-        writer.println(String.format("        return Objects.hash(%s);",
-                methods.keySet().stream().collect(Collectors.joining(", "))));
-        writer.println("    }");
-        writer.println();
-    }
-
-    private void printToString(
-            final PrintWriter writer,
-            final String simpleName,
-            final Map<String, ExecutableElement> methods) {
-        writer.println("    @Override");
-        writer.println("    public String toString() {");
-        writer.println(String.format("        return \"%s:[%s]\";", simpleName, methods.keySet().stream()
-                .map(name -> String.format("%s=\" + %s + \"", name, name)).collect(Collectors.joining(", "))));
-        writer.println("    }");
-    }
-
-    private void printBuilder(
-            final PrintWriter writer,final String simpleName,
-            final Map<String, ExecutableElement> methods) {
-        writer.println();
-        writer.println("    public " + simpleName + "() {");
-        writer.println("    }");
-
-        writer.println();
-        writer.println("    private " + simpleName + "(final Builder builder) {");
-        methods.forEach((name, method) -> {
-            writer.println("        this." + name + " = builder." + name + ";");
-        });
-        writer.println("    }");
-
-        writer.println();
-        writer.println("    public static Builder builder() {");
-        writer.println("        return new Builder();");
-        writer.println("    }");
-        writer.println();
-
-        writer.println("    public static final class Builder {");
-        printFields(writer, methods, "with", "Builder", false);
-        writer.println("        public " + simpleName + " build() {");
-        methods.forEach((name, method) -> {
-            final NonNull requiredMessage = method.getAnnotation(NonNull.class);
-            if (Objects.nonNull(requiredMessage)) {
-                final String message = Optional.ofNullable(requiredMessage.value())
+            final NonNull required = method.getAnnotation(NonNull.class);
+            if (Objects.nonNull(required)) {
+                fieldContext.put("required", true);
+                fieldContext.put("message", Optional.ofNullable(required.value())
                         .filter(m -> !m.isEmpty())
-                        .orElseGet(() -> "Field '" + name + "' must be set");
-                writer.println("            Objects.requireNonNull(" + name + ", \"" + message + "\");");
+                        .orElseGet(() -> "Field " + fieldName + " is a required field"));
             }
+            Optional.ofNullable(builder).map(Builder::value).ifPresent(type -> {
+                switch (type) {
+                case FLUENT:
+                    fieldContext.put("fluentMethodName", "with" + applyCase(Character::toUpperCase, fieldName));
+                    break;
+                default:
+                    fieldContext.put("fluentMethodName", fieldContext.get("setterMethodName"));
+                    break;
+                }
+            });
+            fields.add(fieldContext);
         });
-        writer.println("            return new " + simpleName + "(this);");
-        writer.println("        }");
-        writer.println("    }");
+
+        context.put("packageName", packageName);
+        context.put("simpleName", simpleName);
+        context.put("elementName", element.getSimpleName());
+        context.put("fields", fields);
+        return context;
+    }
+
+    private TemplateEngine objectTemplate(final TypeElement element) {
+        final Template template = element.getAnnotation(Template.class);
+        if (Objects.nonNull(template)) {
+            TemplateEngine engine = provider.get(template.value());
+            engine.templatePrefix(template.location());
+            return engine;
+        }
+        return provider.get(Template.DEFAULT_ENGINE);
     }
 
     private String applyCase(final Function<Character, Character> casing, final String name) {

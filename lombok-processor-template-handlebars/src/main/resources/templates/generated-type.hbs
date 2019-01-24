@@ -1,26 +1,26 @@
 package {{packageName}};
-import java.utils.Objects;
+import java.util.Objects;
 
 public class {{simpleName}} implements {{elementName}} {
-	{{#fields}}
-	private {{#immutable}}final {{/immutable}}{{returnType}} {{fieldName}};
-	
-	@Override
-	public {{returnType}} {{methodName}}() {
-		return {{fieldName}};
-	}
-	
-	{{#unless immutable}}
-	public void {{setterMethodName}}(final {{fieldName}}) {
-		this.{{fieldName}} = {{fieldName}};
-	}
-	{{/unless}}
-	{{/fields}}
-	
-	{{#constructors}}
-	{{#noArgs}}
-	public {{simpleName}}() {
-	}
+{{#fields}}
+    private {{#immutable}}final {{/immutable}}{{returnType}} {{fieldName}};
+
+    @Override
+    public {{returnType}} {{methodName}}() {
+        return {{fieldName}};
+    }
+
+{{#unless immutable}}
+    public void {{setterMethodName}}(final {{returnType}} {{fieldName}}) {
+        this.{{fieldName}} = {{fieldName}};
+    }
+{{/unless}}
+{{/fields}}
+
+{{#constructors}}
+{{#noArgs}}
+    public {{simpleName}}() {
+    }
 
 	{{/noArgs}}
 	{{#allArgs}}
@@ -37,7 +37,7 @@ public class {{simpleName}} implements {{elementName}} {
 	}
 
 	{{/allArgs}}
-	{{requiredArgs}}
+	{{#requiredArgs}}
 	public {{simpleName}}(
 		{{#fields}}
 		{{#if required}}
@@ -78,43 +78,39 @@ public class {{simpleName}} implements {{elementName}} {
 	}
 	{{/equalsAndHashCode}}
 
-    {{#builder}}
+{{#builder}}
     private {{simpleName}}(final Builder builder) {
-    	{{#fields}}
-    	this.{{fieldName}} = builder.{{fieldName}};
-    	{{/fields}}
+{{#fields}}
+        this.{{fieldName}} = builder.{{fieldName}};
+{{/fields}}
     }
-    
+
     public static final class Builder {
-    	{{#fields}}
-    	private {{returnType}} {{fieldName}};
-    	
-    	public Builder {{methodName}}(final {{fieldName}}) {
-    		this.{{fieldName}} = {{fieldName}};
-    		return this;
-    	}
-   
-    	{{/fields}}
-    
-    	public {{elementName}} build() {
-    		{{#fields}}
-    		{{#required}}
-    		Objects.requireNonNull({{fieldName}}, "{{message}}");
-    		{{/required}}
-    		{{/fields}}
-    		return new {{simpleName}}(this);
-    	}
-    	
-    	{{#toString}}
-    	@Override
-    	public String toString() {
-    		return "{{simpleName}}.Builder:[{{fieldsToString}}]";
-    	}
-    	{{/toString}}
+{{#fields}}
+        private {{returnType}} {{fieldName}};
+
+        public Builder {{fluentMethodName}}(final {{returnType}} {{fieldName}}) {
+            this.{{fieldName}} = {{fieldName}};
+            return this;
+        }
+{{/fields}}
+        public {{elementName}} build() {
+{{#fields}}{{#required}}
+            Objects.requireNonNull({{fieldName}}, "{{message}}");
+{{/required}}{{/fields}}
+            return new {{simpleName}}(this);
+        }
+
+{{#toString}}
+        @Override
+        public String toString() {
+            return "{{simpleName}}.Builder:[{{fieldsToString}}]";
+        }
+{{/toString}}
     }
-    
+
     public static Builder builder() {
         return new Builder();
     }
-    {{/builder}}
+{{/builder}}
 }

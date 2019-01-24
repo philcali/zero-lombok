@@ -8,7 +8,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Template {
-    String value() default "handlebars";
+    public static final String DEFAULT_ENGINE = "handlebars";
 
-    String location() default "/templates";
+    public static final String DEFAULT_LOCATION = "/templates";
+
+    String value() default DEFAULT_ENGINE;
+
+    String location() default DEFAULT_LOCATION;
 }
