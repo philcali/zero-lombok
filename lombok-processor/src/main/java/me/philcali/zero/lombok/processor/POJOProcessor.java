@@ -33,10 +33,12 @@ import com.google.auto.service.AutoService;
 import me.philcali.zero.lombok.annotation.AllArgsConstructor;
 import me.philcali.zero.lombok.annotation.Builder;
 import me.philcali.zero.lombok.annotation.Data;
+import me.philcali.zero.lombok.annotation.EqualsAndHashCode;
 import me.philcali.zero.lombok.annotation.NoArgsConstructor;
 import me.philcali.zero.lombok.annotation.NonNull;
 import me.philcali.zero.lombok.annotation.RequiredArgsConstructor;
 import me.philcali.zero.lombok.annotation.Template;
+import me.philcali.zero.lombok.annotation.ToString;
 import me.philcali.zero.lombok.processor.template.TemplateEngine;
 import me.philcali.zero.lombok.processor.template.TemplateEngineProvider;
 import me.philcali.zero.lombok.processor.template.TemplateEngineProviderSystem;
@@ -107,6 +109,14 @@ public class POJOProcessor extends AbstractProcessor {
         final Builder builder = element.getAnnotation(Builder.class);
         if (Objects.nonNull(builder)) {
             context.put("builder", true);
+        }
+
+        if (Objects.nonNull(element.getAnnotation(ToString.class))) {
+            context.put("toString", true);
+        }
+
+        if (Objects.nonNull(element.getAnnotation(EqualsAndHashCode.class))) {
+            context.put("equalsAndHashCode", true);
         }
 
         final List<Map<String, Object>> fields = new ArrayList<>();

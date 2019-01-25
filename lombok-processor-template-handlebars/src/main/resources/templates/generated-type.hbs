@@ -22,61 +22,58 @@ public class {{simpleName}} implements {{elementName}} {
     public {{simpleName}}() {
     }
 
-	{{/noArgs}}
-	{{#allArgs}}
-	public {{simpleName}}(
-		{{#fields}}
-		final {{returnType}} {{fieldName}}{{#unless @last}},{{/unless}}
-		{{/fields}}) {
-		{{#fields}}
-		{{#if required}}
-		Objects.requireNonNull({{fieldName}}, "{{message}}");
-		{{/if}}
-		{{/fields}}
-		this.{{fieldName}} = {{fieldName}};
-	}
+{{/noArgs}}
+{{#allArgs}}
+    public {{simpleName}}(
+{{#fields}}
+        final {{returnType}} {{fieldName}}{{#unless @last}},{{/unless}}
+{{/fields}}) {
+{{#fields}}
+{{#if required}}
+        Objects.requireNonNull({{fieldName}}, "{{message}}");
+{{/if}}
+{{/fields}}
+        this.{{fieldName}} = {{fieldName}};
+    }
+{{/allArgs}}
+{{#requiredArgs}}
+    public {{simpleName}}(
+{{#fields}}
+{{#if required}}
+        final {{returnType}} {{fieldName}}{{#unless @last}},{{/unless}}
+{{/if}}
+{{/fields}}) {
+{{#fields}}
+{{#if required}}
+        Objects.requireNonNull({{fieldName}}, "{{message}}");
+{{/if}}
+{{/fields}}
+        this.{{fieldName}} = {{fieldName}};
+    }
+{{/requiredArgs}}
+{{/constructors}}
+{{#toString}}
+    @Override
+    public String toString() {
+        return "{{simpleName}}:[{{#fields}}{{fieldName}} = " + {{fieldName}} + "{{#unless @last}}, {{/unless}}{{/fields}}]";
+    }
+{{/toString}}
+	
+{{#equalsAndHashCode}}
+    @Override
+    public boolean equals(final Object object) {
+        if (Objects.isNull(object) || !(object instanceof {{elementName}})) {
+            return false;
+        }
+        final {{elementName}} other = ({{elementName}}) object;
+        return {{#fields}}Objects.equals({{fieldName}}, other.{{methodName}}()){{#unless @last}} && {{/unless}}{{/fields}};
+    }
 
-	{{/allArgs}}
-	{{#requiredArgs}}
-	public {{simpleName}}(
-		{{#fields}}
-		{{#if required}}
-		final {{returnType}} {{fieldName}}{{#unless @last}},{{/unless}}
-		{{/if}}
-		{{/fields}}) {
-		{{#fields}}
-		{{#if required}}
-		Objects.requireNonNull({{fieldName}}, "{{message}}");
-		{{/if}}
-		{{/fields}}
-		this.{{fieldName}} = {{fieldName}};
-	}
-
-	{{/requiredArgs}}
-	{{/constructors}}
-	
-	{{#toString}}
-	@Override
-	public String toString() {
-		return "{{simpleName}}:[{{fieldsToString}}]";
-	}
-	{{/toString}}
-	
-	{{#equalsAndHashCode}}
-	@Override
-	public boolean equals(final Object object) {
-		if (Objects.isNull(object) || !(object instanceof {{elementName}})) {
-			return false;
-		}
-		final {{elementName}} other = ({{elementName}}) object;
-		return {{fieldsEquals}};
-	}
-	
-	@Override
-	public int hashCode() {
-		return Objects.hash({{fieldsHashCode}});
-	}
-	{{/equalsAndHashCode}}
+    @Override
+    public int hashCode() {
+        return Objects.hash({{#fields}}{{fieldName}}{{#unless @last}}, {{/unless}}{{/fields}});
+    }
+{{/equalsAndHashCode}}
 
 {{#builder}}
     private {{simpleName}}(final Builder builder) {
@@ -104,7 +101,7 @@ public class {{simpleName}} implements {{elementName}} {
 {{#toString}}
         @Override
         public String toString() {
-            return "{{simpleName}}.Builder:[{{fieldsToString}}]";
+            return "{{simpleName}}.Builder:[{{#fields}}{{fieldName}} = " + {{fieldName}} + "{{#unless @last}}, {{/unless}}{{/fields}}]";
         }
 {{/toString}}
     }
