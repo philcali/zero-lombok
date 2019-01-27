@@ -86,11 +86,21 @@ public class POJOProcessor extends AbstractProcessor {
             final TemplateEngine engine = objectTemplate(element);
             final JavaFileObject object = processingEnv.getFiler().createSourceFile(className, element);
             try (PrintWriter writer = new PrintWriter(object.openWriter())) {
-                writer.print(engine.apply(DEFAULT_TEMPLATE, generateContext(className, element)));
+                final String result = engine.apply(DEFAULT_TEMPLATE, generateContext(className, element));
+                writer.print(result.replaceAll("\\n\\n\\n+", "\n"));
             }
         } catch (TemplateNotFoundException | IOException e) {
             log.printMessage(Kind.ERROR, e.getMessage(), element);
         }
+    }
+
+    private Map<String, ExecutableElement> getElementMethods(final TypeElement element) {
+        return element.getEnclosedElements().stream()
+                .filter(method -> method.getKind() == ElementKind.METHOD)
+                .map(e -> (ExecutableElement) e)
+                .collect(Collectors.toMap(
+                        e -> applyCase(Character::toLowerCase, e.getSimpleName().toString().replaceAll("^(get|is)", "")),
+                        Function.identity()));
     }
 
     private Object generateContext(final String className, final TypeElement element) {
@@ -98,25 +108,13 @@ public class POJOProcessor extends AbstractProcessor {
         final String packageName = className.substring(0, lastDot);
         final String simpleName = className.substring(lastDot + 1);
 
-        final Map<String, ExecutableElement> methods = element.getEnclosedElements().stream()
-                .filter(method -> method.getKind() == ElementKind.METHOD).map(e -> (ExecutableElement) e)
-                .collect(Collectors.toMap(
-                        e -> applyCase(Character::toLowerCase, e.getSimpleName().toString().replaceAll("^(get|is)", "")),
-                        Function.identity()));
-
+        final Map<String, ExecutableElement> methods = getElementMethods(element);
         final Map<String, Object> context = new HashMap<>();
 
+        final boolean dataTag = Objects.nonNull(element.getAnnotation(Data.class));
         final Builder builder = element.getAnnotation(Builder.class);
         if (Objects.nonNull(builder)) {
             context.put("builder", true);
-        }
-
-        if (Objects.nonNull(element.getAnnotation(ToString.class))) {
-            context.put("toString", true);
-        }
-
-        if (Objects.nonNull(element.getAnnotation(EqualsAndHashCode.class))) {
-            context.put("equalsAndHashCode", true);
         }
 
         final List<Map<String, Object>> fields = new ArrayList<>();
@@ -154,6 +152,12 @@ public class POJOProcessor extends AbstractProcessor {
         context.put("simpleName", simpleName);
         context.put("elementName", element.getSimpleName());
         context.put("fields", fields);
+
+        context.put("toString", dataTag || Objects.nonNull(element.getAnnotation(ToString.class)));
+        context.put("equalsAndHashCode", dataTag || Objects.nonNull(element.getAnnotation(EqualsAndHashCode.class)));
+        context.put("noArgs", Objects.nonNull(element.getAnnotation(NoArgsConstructor.class)));
+        context.put("allArgs", Objects.nonNull(element.getAnnotation(AllArgsConstructor.class)));
+        context.put("requiredArgs", dataTag || Objects.nonNull(element.getAnnotation(RequiredArgsConstructor.class)));
         return context;
     }
 
