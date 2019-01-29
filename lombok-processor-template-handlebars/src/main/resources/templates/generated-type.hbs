@@ -3,15 +3,15 @@ import java.util.Objects;
 
 public class {{simpleName}} implements {{elementName}} {
 {{#fields}}
-    private {{#immutable}}final {{/immutable}}{{returnType}} {{fieldName}};
+    private {{#immutable}}final {{/immutable}}{{{returnType}}} {{fieldName}};
 
     @Override
-    public {{returnType}} {{methodName}}() {
+    public {{{returnType}}} {{methodName}}() {
         return {{fieldName}};
     }
 
 {{#unless immutable}}
-    public void {{setterMethodName}}(final {{returnType}} {{fieldName}}) {
+    public void {{setterMethodName}}(final {{{returnType}}} {{fieldName}}) {
         this.{{fieldName}} = {{fieldName}};
     }
 {{/unless}}
@@ -25,7 +25,7 @@ public class {{simpleName}} implements {{elementName}} {
 {{#allArgs}}
     public {{simpleName}}(
 {{#fields}}
-        final {{returnType}} {{fieldName}}{{#unless @last}},{{/unless}}
+        final {{{returnType}}} {{fieldName}}{{#unless @last}},{{/unless}}
 
 {{/fields}}
     ) {
@@ -44,7 +44,7 @@ public class {{simpleName}} implements {{elementName}} {
     public {{simpleName}}(
 {{#fields}}
 {{#if required}}
-        {{#unless @first}}, {{/unless}}final {{returnType}} {{fieldName}}
+        {{#unless @first}}, {{/unless}}final {{{returnType}}} {{fieldName}}
 
 {{/if}}
 {{/fields}}
@@ -98,9 +98,28 @@ public class {{simpleName}} implements {{elementName}} {
 
     public static final class Builder {
 {{#fields}}
-        private {{returnType}} {{fieldName}};
+        private {{{returnType}}} {{fieldName}};
+        
+{{#collection}}
+        public Builder {{fluentMethodName}}(final {{#valueTypes}}{{{.}}}{{/valueTypes}}...{{fieldName}}) {
+            if (Objects.isNull(this.{{fieldName}})) {
+                this.{{fieldName}} = new {{implementation}}<>();
+            }
+            this.{{fieldName}}.addAll(java.util.Arrays.asList({{fieldName}}));
+            return this;            
+        }
+{{/collection}}
+{{#map}}
+        public Builder {{fluentMethodName}}({{#valueTypes}}final {{{.}}} value{{@index}}{{#unless @last}}, {{/unless}}{{/valueTypes}}) {
+            if (Objects.isNull(this.{{fieldName}})) {
+                this.{{fieldName}} = new {{implementation}}<>();
+            }
+            this.{{fieldName}}.put(value0, value1);
+            return this;
+        }
+{{/map}}
 
-        public Builder {{fluentMethodName}}(final {{returnType}} {{fieldName}}) {
+        public Builder {{fluentMethodName}}(final {{{returnType}}} {{fieldName}}) {
             this.{{fieldName}} = {{fieldName}};
             return this;
         }

@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Messager;
@@ -25,6 +26,8 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 
@@ -39,6 +42,8 @@ import me.philcali.zero.lombok.annotation.NonNull;
 import me.philcali.zero.lombok.annotation.RequiredArgsConstructor;
 import me.philcali.zero.lombok.annotation.Template;
 import me.philcali.zero.lombok.annotation.ToString;
+import me.philcali.zero.lombok.processor.mapping.TypeMappingProvider;
+import me.philcali.zero.lombok.processor.mapping.TypeMappingProviderSystem;
 import me.philcali.zero.lombok.processor.template.TemplateEngine;
 import me.philcali.zero.lombok.processor.template.TemplateEngineProvider;
 import me.philcali.zero.lombok.processor.template.TemplateEngineProviderSystem;
@@ -49,6 +54,7 @@ public class POJOProcessor extends AbstractProcessor {
     private static final String DEFAULT_TEMPLATE = "generated-type";
     private Messager log;
     private TemplateEngineProvider provider;
+    private TypeMappingProvider mappings;
     private Map<Name, Element> processedElements;
 
     @Override
@@ -56,6 +62,7 @@ public class POJOProcessor extends AbstractProcessor {
         super.init(processingEnv);
         this.log = processingEnv.getMessager();
         this.provider = new TemplateEngineProviderSystem(getClass().getClassLoader());
+        this.mappings = new TypeMappingProviderSystem(getClass().getClassLoader());
         this.processedElements = new HashMap<>();
     }
 
@@ -117,6 +124,7 @@ public class POJOProcessor extends AbstractProcessor {
             context.put("builder", true);
         }
 
+
         final List<Map<String, Object>> fields = new ArrayList<>();
         methods.forEach((fieldName, method) -> {
             final Map<String, Object> fieldContext = new HashMap<>();
@@ -145,6 +153,22 @@ public class POJOProcessor extends AbstractProcessor {
                     break;
                 }
             });
+            if (method.getReturnType().getKind() == TypeKind.DECLARED) {
+                final DeclaredType declaredType = (DeclaredType) method.getReturnType();
+                final Stream<TypeElement> roots = getRootInterfaces(declaredType.asElement());
+                roots.map(iElement -> mappings.get(iElement.getQualifiedName().toString()))
+                .filter(opt -> opt.isPresent())
+                .findFirst()
+                .flatMap(Function.identity())
+                .ifPresent(mapping -> {
+                    fieldContext.put(mapping.getContract().getSimpleName().toLowerCase(), true);
+                    fieldContext.put("contract", mapping.getContract().getCanonicalName());
+                    fieldContext.put("implementation", mapping.getImplementation().getCanonicalName());
+                    fieldContext.put("valueTypes", declaredType.getTypeArguments().stream()
+                            .map(arg -> arg.toString())
+                            .collect(Collectors.toList()));
+                });
+            }
             fields.add(fieldContext);
         });
 
@@ -159,6 +183,17 @@ public class POJOProcessor extends AbstractProcessor {
         context.put("allArgs", Objects.nonNull(element.getAnnotation(AllArgsConstructor.class)));
         context.put("requiredArgs", dataTag || Objects.nonNull(element.getAnnotation(RequiredArgsConstructor.class)));
         return context;
+    }
+
+    private Stream<TypeElement> getRootInterfaces(final Element element) {
+        if (isInterface(element)) {
+            final TypeElement type = (TypeElement) element;
+            return Stream.concat(Stream.of(type), type.getInterfaces().stream()
+                    .filter(parent -> parent.getKind() == TypeKind.DECLARED)
+                    .map(parent -> (DeclaredType) parent)
+                    .flatMap(parent -> getRootInterfaces(parent.asElement())));
+        }
+        return Stream.empty();
     }
 
     private TemplateEngine objectTemplate(final TypeElement element) {
