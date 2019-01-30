@@ -7,6 +7,7 @@ import me.philcali.zero.lombok.annotation.Builder;
 import me.philcali.zero.lombok.annotation.Data;
 
 @Builder @Data @AllArgsConstructor
+// Use data setters where applicable and no creator exists
 @JsonDeserialize(as = VehicleData.class)
 public interface Vehicle {
     String getMake();
