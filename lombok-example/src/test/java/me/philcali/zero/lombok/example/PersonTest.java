@@ -3,12 +3,16 @@ package me.philcali.zero.lombok.example;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PersonTest {
     private Person person;
@@ -27,6 +31,16 @@ public class PersonTest {
                         .withYear(2015)
                         .build())
                 .build();
+    }
+
+    @Test
+    public void testJacksonIntegration() throws IOException {
+        final ObjectMapper mapper = new ObjectMapper();
+        final String json = mapper.writeValueAsString(person);
+        final String expectedJson = "{\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"age\":99}";
+        assertEquals(expectedJson, json);
+        final Person otherPerson = mapper.readValue(json, Person.class);
+        assertEquals(person, otherPerson);
     }
 
     @Test(expected = NullPointerException.class)

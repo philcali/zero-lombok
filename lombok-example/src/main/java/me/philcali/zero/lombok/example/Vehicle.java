@@ -1,14 +1,17 @@
 package me.philcali.zero.lombok.example;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import me.philcali.zero.lombok.annotation.AllArgsConstructor;
 import me.philcali.zero.lombok.annotation.Builder;
 import me.philcali.zero.lombok.annotation.Data;
 
 @Builder @Data @AllArgsConstructor
+@JsonDeserialize(as = VehicleData.class)
 public interface Vehicle {
-    String make();
+    String getMake();
 
-    String model();
+    String getModel();
 
-    int year();
+    int getYear();
 }
