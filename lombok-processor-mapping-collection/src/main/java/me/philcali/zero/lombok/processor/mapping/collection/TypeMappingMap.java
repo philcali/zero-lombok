@@ -8,14 +8,19 @@ import com.google.auto.service.AutoService;
 import me.philcali.zero.lombok.processor.mapping.TypeMapping;
 
 @AutoService(TypeMapping.class)
-public class TypeMappingMap implements TypeMapping<Map, HashMap> {
+public class TypeMappingMap implements TypeMapping {
     @Override
-    public Class<Map> getContract() {
-        return Map.class;
+    public String getContract() {
+        return Map.class.getCanonicalName();
     }
 
     @Override
-    public Class<HashMap> getImplementation() {
-        return HashMap.class;
+    public String getImplementation() {
+        return HashMap.class.getCanonicalName();
+    }
+
+    @Override
+    public String getVerb() {
+        return "put";
     }
 }

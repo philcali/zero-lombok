@@ -6,6 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.METHOD)
+@Target(ElementType.TYPE)
 public @interface ConcreteType {
+    Class<?> contract();
+    Class<?> implementation();
+    String verb() default "add";
 }

@@ -21,6 +21,8 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -35,6 +37,7 @@ import com.google.auto.service.AutoService;
 
 import me.philcali.zero.lombok.annotation.AllArgsConstructor;
 import me.philcali.zero.lombok.annotation.Builder;
+import me.philcali.zero.lombok.annotation.ConcreteTypes;
 import me.philcali.zero.lombok.annotation.Data;
 import me.philcali.zero.lombok.annotation.EqualsAndHashCode;
 import me.philcali.zero.lombok.annotation.NoArgsConstructor;
@@ -42,7 +45,11 @@ import me.philcali.zero.lombok.annotation.NonNull;
 import me.philcali.zero.lombok.annotation.RequiredArgsConstructor;
 import me.philcali.zero.lombok.annotation.Template;
 import me.philcali.zero.lombok.annotation.ToString;
+import me.philcali.zero.lombok.processor.mapping.TypeMapping;
+import me.philcali.zero.lombok.processor.mapping.TypeMappingBasic;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingProvider;
+import me.philcali.zero.lombok.processor.mapping.TypeMappingProviderBasic;
+import me.philcali.zero.lombok.processor.mapping.TypeMappingProviderChain;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingProviderSystem;
 import me.philcali.zero.lombok.processor.template.TemplateEngine;
 import me.philcali.zero.lombok.processor.template.TemplateEngineProvider;
@@ -124,7 +131,7 @@ public class POJOProcessor extends AbstractProcessor {
             context.put("builder", true);
         }
 
-
+        final TypeMappingProvider typeProvider = decorateTypeProvider(element);
         final List<Map<String, Object>> fields = new ArrayList<>();
         methods.forEach((fieldName, method) -> {
             final Map<String, Object> fieldContext = new HashMap<>();
@@ -152,23 +159,28 @@ public class POJOProcessor extends AbstractProcessor {
                     fieldContext.put("fluentMethodName", fieldContext.get("setterMethodName"));
                     break;
                 }
+
+                if (method.getReturnType().getKind() == TypeKind.DECLARED) {
+                    final DeclaredType declaredType = (DeclaredType) method.getReturnType();
+                    final Stream<TypeElement> roots = getRootInterfaces(declaredType.asElement());
+                    roots.map(iElement -> typeProvider.get(iElement.getQualifiedName().toString()))
+                    .filter(opt -> opt.isPresent())
+                    .findFirst()
+                    .flatMap(Function.identity())
+                    .ifPresent(mapping -> {
+                        final int lastNameDot = mapping.getContract().lastIndexOf('.');
+                        final String mappingName = mapping.getContract().substring(lastNameDot + 1);
+                        fieldContext.put(mappingName.toLowerCase(), true);
+                        fieldContext.put("actionMethodName", mapping.getVerb() + applyCase(Character::toUpperCase, fieldName));
+                        fieldContext.put("contract", mapping.getContract());
+                        fieldContext.put("implementation", mapping.getImplementation());
+                        fieldContext.put("valueTypes", declaredType.getTypeArguments().stream()
+                                .map(arg -> arg.toString())
+                                .collect(Collectors.toList()));
+                    });
+                }
             });
-            if (method.getReturnType().getKind() == TypeKind.DECLARED) {
-                final DeclaredType declaredType = (DeclaredType) method.getReturnType();
-                final Stream<TypeElement> roots = getRootInterfaces(declaredType.asElement());
-                roots.map(iElement -> mappings.get(iElement.getQualifiedName().toString()))
-                .filter(opt -> opt.isPresent())
-                .findFirst()
-                .flatMap(Function.identity())
-                .ifPresent(mapping -> {
-                    fieldContext.put(mapping.getContract().getSimpleName().toLowerCase(), true);
-                    fieldContext.put("contract", mapping.getContract().getCanonicalName());
-                    fieldContext.put("implementation", mapping.getImplementation().getCanonicalName());
-                    fieldContext.put("valueTypes", declaredType.getTypeArguments().stream()
-                            .map(arg -> arg.toString())
-                            .collect(Collectors.toList()));
-                });
-            }
+
             fields.add(fieldContext);
         });
 
@@ -183,6 +195,29 @@ public class POJOProcessor extends AbstractProcessor {
         context.put("allArgs", Objects.nonNull(element.getAnnotation(AllArgsConstructor.class)));
         context.put("requiredArgs", dataTag || Objects.nonNull(element.getAnnotation(RequiredArgsConstructor.class)));
         return context;
+    }
+
+    private TypeMappingProvider decorateTypeProvider(final TypeElement element) {
+        final Map<String, TypeMapping> basicMappings = new HashMap<>();
+        element.getAnnotationMirrors().stream()
+        .filter(mirror -> mirror.getAnnotationType().asElement().getSimpleName().toString().equals(ConcreteTypes.class.getSimpleName()))
+        .findFirst()
+        .flatMap(mirror -> mirror.getElementValues().values().stream().findFirst())
+        .map(value -> (List<AnnotationValue>) value.getValue())
+        .ifPresent(values -> {
+            values.forEach(value -> {
+                final AnnotationMirror mirror = (AnnotationMirror) value.getValue();
+                final Map<String, ? extends AnnotationValue> type = mirror.getElementValues()
+                        .entrySet().stream().collect(Collectors.toMap(
+                                entry -> entry.getKey().getSimpleName().toString(),
+                                entry -> entry.getValue()));
+                basicMappings.put(type.get("contract").getValue().toString(), new TypeMappingBasic(
+                        type.get("contract").getValue().toString(),
+                        type.get("implementation").getValue().toString(),
+                        Optional.ofNullable(type.get("verb")).map(t -> t.getValue().toString()).orElse("add")));
+            });
+        });
+        return new TypeMappingProviderChain(new TypeMappingProviderBasic(basicMappings), mappings);
     }
 
     private Stream<TypeElement> getRootInterfaces(final Element element) {

@@ -101,7 +101,7 @@ public class {{simpleName}} implements {{elementName}} {
         private {{{returnType}}} {{fieldName}};
         
 {{#collection}}
-        public Builder {{fluentMethodName}}(final {{#valueTypes}}{{{.}}}{{/valueTypes}}...{{fieldName}}) {
+        public Builder {{actionMethodName}}(final {{#valueTypes}}{{{.}}}{{/valueTypes}}...{{fieldName}}) {
             if (Objects.isNull(this.{{fieldName}})) {
                 this.{{fieldName}} = new {{implementation}}<>();
             }
@@ -110,7 +110,7 @@ public class {{simpleName}} implements {{elementName}} {
         }
 {{/collection}}
 {{#map}}
-        public Builder {{fluentMethodName}}({{#valueTypes}}final {{{.}}} value{{@index}}{{#unless @last}}, {{/unless}}{{/valueTypes}}) {
+        public Builder {{actionMethodName}}({{#valueTypes}}final {{{.}}} value{{@index}}{{#unless @last}}, {{/unless}}{{/valueTypes}}) {
             if (Objects.isNull(this.{{fieldName}})) {
                 this.{{fieldName}} = new {{implementation}}<>();
             }

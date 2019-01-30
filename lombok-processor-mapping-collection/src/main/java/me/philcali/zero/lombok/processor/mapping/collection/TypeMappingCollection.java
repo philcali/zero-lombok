@@ -8,15 +8,20 @@ import com.google.auto.service.AutoService;
 import me.philcali.zero.lombok.processor.mapping.TypeMapping;
 
 @AutoService(TypeMapping.class)
-public class TypeMappingCollection implements TypeMapping<Collection, ArrayList> {
+public class TypeMappingCollection implements TypeMapping {
 
     @Override
-    public Class<Collection> getContract() {
-        return Collection.class;
+    public String getContract() {
+        return Collection.class.getCanonicalName();
     }
 
     @Override
-    public Class<ArrayList> getImplementation() {
-        return ArrayList.class;
+    public String getImplementation() {
+        return ArrayList.class.getCanonicalName();
+    }
+
+    @Override
+    public String getVerb() {
+        return "add";
     }
 }

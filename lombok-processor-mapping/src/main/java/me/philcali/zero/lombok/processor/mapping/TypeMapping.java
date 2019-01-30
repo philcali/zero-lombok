@@ -1,7 +1,9 @@
 package me.philcali.zero.lombok.processor.mapping;
 
-public interface TypeMapping<C, I extends C> {
-    Class<C> getContract();
+public interface TypeMapping {
+    String getContract();
 
-    Class<I> getImplementation();
+    String getImplementation();
+
+    String getVerb();
 }

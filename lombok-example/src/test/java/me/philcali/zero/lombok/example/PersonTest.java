@@ -3,6 +3,10 @@ package me.philcali.zero.lombok.example;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,6 +19,13 @@ public class PersonTest {
                 .withName("Philip Cali")
                 .withDead(true)
                 .withAge(99)
+                .addScopes("blue")
+                .addScopes("42")
+                .putVehicles("Old Blue", VehicleData.builder()
+                        .withMake("Nissan")
+                        .withModel("Leaf")
+                        .withYear(2015)
+                        .build())
                 .build();
     }
 
@@ -41,6 +52,16 @@ public class PersonTest {
         other.setDead(true);
         assertNotEquals(person, other);
         other.setAge(99);
+        assertNotEquals(person, other);
+        other.setScopes(Arrays.asList("blue", "42"));
+        assertNotEquals(person, other);
+        final Map<String, Vehicle> vehicles = new HashMap<>();
+        vehicles.put("Old Blue", VehicleData.builder()
+                .withMake("Nissan")
+                .withModel("Leaf")
+                .withYear(2015)
+                .build());
+        other.setVehicles(vehicles);
         assertEquals(person, other);
     }
 
@@ -53,6 +74,16 @@ public class PersonTest {
         other.setDead(true);
         assertNotEquals(person.hashCode(), other.hashCode());
         other.setAge(99);
+        assertNotEquals(person.hashCode(), other.hashCode());
+        other.setScopes(Arrays.asList("blue", "42"));
+        assertNotEquals(person.hashCode(), other.hashCode());
+        final Map<String, Vehicle> vehicles = new HashMap<>();
+        vehicles.put("Old Blue", VehicleData.builder()
+                .withMake("Nissan")
+                .withModel("Leaf")
+                .withYear(2015)
+                .build());
+        other.setVehicles(vehicles);
         assertEquals(person.hashCode(), other.hashCode());
     }
 }

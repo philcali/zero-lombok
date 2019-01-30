@@ -16,12 +16,10 @@ public class TypeMappingProviderSystem implements TypeMappingProvider {
         this(ClassLoader.getSystemClassLoader());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <C> Optional<TypeMapping<C, ? extends C>> get(final String contract) {
+    public Optional<TypeMapping> get(final String contract) {
         return StreamSupport.stream(ServiceLoader.load(TypeMapping.class, loader).spliterator(), false)
-                .filter(mapping -> contract.equals(mapping.getContract().getCanonicalName()))
-                .findFirst()
-                .map(mapping -> (TypeMapping<C, ?>) mapping);
+                .filter(mapping -> contract.equals(mapping.getContract()))
+                .findFirst();
     }
 }
