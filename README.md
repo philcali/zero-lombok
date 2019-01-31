@@ -205,6 +205,13 @@ public interface Person {
 
     Map<String, Vehicle> getVehicles();
 }
+
+@Data @AllArgsConstructor
+public interface Vehicle {
+    String getMake();
+    String getModel();
+    int getYear();
+}
 ```
 
 The generated implementation:
@@ -224,7 +231,8 @@ the proper concrete deserialization using the Jackson module.
 ``` java
 @Data
 @JsonDeserialize(as = PersonData.class)
-public interfce Person {
+public interface Person {
+    String getName();
 }
 ```
 
@@ -241,3 +249,12 @@ public interface Person {
 ```
 
 Done-zo!
+
+## What about the generated Code Template?
+
+The `zero-lombok` implementation used a pluggable template system, with
+the default implementation being `lombok-processor-template-handlebars`.
+
+There different ways to override the generated Java source with the template.
+
+- Per interface override

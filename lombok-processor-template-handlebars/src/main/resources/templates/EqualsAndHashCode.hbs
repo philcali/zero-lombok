@@ -1,0 +1,15 @@
+    @Override
+    public boolean equals(final Object object) {
+        if (Objects.isNull(object) || !(object instanceof {{elementName}})) {
+            return false;
+        }
+        final {{elementName}} other = ({{elementName}}) object;
+        return {{#fields}}Objects.equals({{fieldName}}, other.{{methodName}}()){{#unless @last}}
+            && {{/unless}}{{/fields}};
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash({{#fields}}
+            {{fieldName}}{{#unless @last}}, {{/unless}}{{/fields}});
+    }

@@ -25,7 +25,6 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -39,12 +38,10 @@ import me.philcali.zero.lombok.annotation.AllArgsConstructor;
 import me.philcali.zero.lombok.annotation.Builder;
 import me.philcali.zero.lombok.annotation.ConcreteTypes;
 import me.philcali.zero.lombok.annotation.Data;
-import me.philcali.zero.lombok.annotation.EqualsAndHashCode;
 import me.philcali.zero.lombok.annotation.NoArgsConstructor;
 import me.philcali.zero.lombok.annotation.NonNull;
 import me.philcali.zero.lombok.annotation.RequiredArgsConstructor;
 import me.philcali.zero.lombok.annotation.Template;
-import me.philcali.zero.lombok.annotation.ToString;
 import me.philcali.zero.lombok.processor.mapping.TypeMapping;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingBasic;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingProvider;
@@ -52,13 +49,14 @@ import me.philcali.zero.lombok.processor.mapping.TypeMappingProviderBasic;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingProviderChain;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingProviderSystem;
 import me.philcali.zero.lombok.processor.template.TemplateEngine;
+import me.philcali.zero.lombok.processor.template.TemplateEngineComposite;
 import me.philcali.zero.lombok.processor.template.TemplateEngineProvider;
 import me.philcali.zero.lombok.processor.template.TemplateEngineProviderSystem;
 import me.philcali.zero.lombok.processor.template.exception.TemplateNotFoundException;
 
 @AutoService(Processor.class)
 public class POJOProcessor extends AbstractProcessor {
-    private static final String DEFAULT_TEMPLATE = "generated-type";
+    private static final String DEFAULT_TEMPLATE = "Data";
     private Messager log;
     private TemplateEngineProvider provider;
     private TypeMappingProvider mappings;
@@ -108,27 +106,22 @@ public class POJOProcessor extends AbstractProcessor {
         }
     }
 
-    private Map<String, ExecutableElement> getElementMethods(final TypeElement element) {
-        return element.getEnclosedElements().stream()
-                .filter(method -> method.getKind() == ElementKind.METHOD)
-                .map(e -> (ExecutableElement) e)
-                .collect(Collectors.toMap(
-                        e -> applyCase(Character::toLowerCase, e.getSimpleName().toString().replaceAll("^(get|is)", "")),
-                        Function.identity()));
-    }
-
     private Object generateContext(final String className, final TypeElement element) {
         final int lastDot = className.lastIndexOf('.');
         final String packageName = className.substring(0, lastDot);
         final String simpleName = className.substring(lastDot + 1);
 
-        final Map<String, ExecutableElement> methods = getElementMethods(element);
+        final ProcessorContext context = ProcessorContext.builder()
+                .withElement(element)
+                .withSimpleName(simpleName)
+                .withPackageName(packageName)
+                .build();
         final Map<String, Object> context = new HashMap<>();
 
         final boolean dataTag = Objects.nonNull(element.getAnnotation(Data.class));
         final Builder builder = element.getAnnotation(Builder.class);
         if (Objects.nonNull(builder)) {
-            context.put("builder", true);
+            //context.put("builder", true);
         }
 
         final TypeMappingProvider typeProvider = decorateTypeProvider(element);
@@ -187,13 +180,15 @@ public class POJOProcessor extends AbstractProcessor {
         context.put("packageName", packageName);
         context.put("simpleName", simpleName);
         context.put("elementName", element.getSimpleName());
-        context.put("fields", fields);
 
+        /**
+        context.put("fields", fields);
         context.put("toString", dataTag || Objects.nonNull(element.getAnnotation(ToString.class)));
         context.put("equalsAndHashCode", dataTag || Objects.nonNull(element.getAnnotation(EqualsAndHashCode.class)));
         context.put("noArgs", Objects.nonNull(element.getAnnotation(NoArgsConstructor.class)));
         context.put("allArgs", Objects.nonNull(element.getAnnotation(AllArgsConstructor.class)));
         context.put("requiredArgs", dataTag || Objects.nonNull(element.getAnnotation(RequiredArgsConstructor.class)));
+         */
         return context;
     }
 
@@ -234,15 +229,12 @@ public class POJOProcessor extends AbstractProcessor {
     private TemplateEngine objectTemplate(final TypeElement element) {
         final Template template = element.getAnnotation(Template.class);
         if (Objects.nonNull(template)) {
-            TemplateEngine engine = provider.get(template.value());
+            TemplateEngine engine = new TemplateEngineComposite(provider.get(template.value()));
             engine.templatePrefix(template.location());
+            engine.templatePrefix(Template.DEFAULT_LOCATION);
             return engine;
         }
         return provider.get(Template.DEFAULT_ENGINE);
-    }
-
-    private String applyCase(final Function<Character, Character> casing, final String name) {
-        return casing.apply(name.charAt(0)) + name.substring(1);
     }
 
     @Override

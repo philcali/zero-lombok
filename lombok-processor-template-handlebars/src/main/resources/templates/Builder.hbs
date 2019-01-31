@@ -1,0 +1,43 @@
+    private {{simpleName}}(final Builder builder) {
+{{#fields}}
+        this.{{fieldName}} = builder.{{fieldName}};
+
+{{/fields}}
+    }
+
+    public static final class Builder {
+{{#methods}}
+    {{{.}}}
+{{/methods}}
+{{#fields}}
+{{#collection}}
+        public Builder {{actionMethodName}}(final {{#valueTypes}}{{{.}}}{{/valueTypes}}...{{fieldName}}) {
+            if (Objects.isNull(this.{{fieldName}})) {
+                this.{{fieldName}} = new {{implementation}}<>();
+            }
+            this.{{fieldName}}.addAll(java.util.Arrays.asList({{fieldName}}));
+            return this;            
+        }
+{{/collection}}
+{{#map}}
+        public Builder {{actionMethodName}}({{#valueTypes}}final {{{.}}} value{{@index}}{{#unless @last}}, {{/unless}}{{/valueTypes}}) {
+            if (Objects.isNull(this.{{fieldName}})) {
+                this.{{fieldName}} = new {{implementation}}<>();
+            }
+            this.{{fieldName}}.put(value0, value1);
+            return this;
+        }
+{{/map}}
+{{/fields}}
+        public {{elementName}} build() {
+{{#fields}}{{#required}}
+            Objects.requireNonNull({{fieldName}}, "{{message}}");
+{{/required}}{{/fields}}
+            return new {{simpleName}}(this);
+        }
+        {{#toString}}{{{.}}}{{/toString}}
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }

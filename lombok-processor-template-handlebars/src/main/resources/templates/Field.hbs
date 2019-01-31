@@ -1,0 +1,12 @@
+    private {{#immutable}}final {{/immutable}}{{{returnType}}} {{fieldName}};
+
+    public {{{returnType}}} {{methodName}}() {
+        return {{fieldName}};
+    }
+
+{{#unless immutable}}
+    public {{setterReturnType}} {{setterMethodName}}(final {{{returnType}}} {{fieldName}}) {
+        this.{{fieldName}} = {{fieldName}};
+        return this;
+    }
+{{/unless}}

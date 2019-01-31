@@ -6,4 +6,8 @@ public class TemplateProcessException extends RuntimeException {
     public TemplateProcessException(final Throwable ex) {
         super(ex);
     }
+
+    public TemplateProcessException(final String message) {
+        super(message);
+    }
 }
