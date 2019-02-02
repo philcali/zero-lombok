@@ -9,7 +9,18 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Builder {
     enum Type {
-        FLUENT, SETTER;
+        FLUENT("with"),
+        SETTER("set");
+
+        private final String verb;
+
+        Type(final String verb) {
+            this.verb = verb;
+        }
+
+        public String getVerb() {
+            return verb;
+        }
     }
 
     Type value() default Type.FLUENT;

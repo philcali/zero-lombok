@@ -1,4 +1,4 @@
-package me.philcali.zero.lombok.processor;
+package me.philcali.zero.lombok.processor.context;
 
 import java.util.Map;
 import java.util.Objects;
@@ -15,6 +15,7 @@ public class ProcessorContext {
     private final String simpleName;
     private final String packageName;
     private final TypeElement element;
+    private final ProcessorContext parentContext;
     private final Map<String, ExecutableElement> fields;
 
     public static final class Builder {
@@ -22,6 +23,7 @@ public class ProcessorContext {
         private String simpleName;
         private String packageName;
         private TypeElement element;
+        private ProcessorContext parentContext;
         public Map<String, ExecutableElement> fields;
 
         public Builder withElement(final TypeElement element) {
@@ -46,6 +48,11 @@ public class ProcessorContext {
 
         public Builder withFields(final Map<String, ExecutableElement> fields) {
             this.fields = fields;
+            return this;
+        }
+
+        public Builder withParentContext(final ProcessorContext parentContext) {
+            this.parentContext = parentContext;
             return this;
         }
 
@@ -81,7 +88,12 @@ public class ProcessorContext {
         this.elementName = builder.elementName;
         this.simpleName = builder.simpleName;
         this.packageName = builder.packageName;
+        this.parentContext = builder.parentContext;
         this.fields = builder.fields;
+    }
+
+    public ProcessorContext getParentContext() {
+        return parentContext;
     }
 
     public String getElementName() {

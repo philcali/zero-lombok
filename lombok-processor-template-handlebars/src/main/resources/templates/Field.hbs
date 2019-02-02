@@ -1,8 +1,30 @@
     private {{#immutable}}final {{/immutable}}{{{returnType}}} {{fieldName}};
 
+{{#if contract}}
+    @Override
     public {{{returnType}}} {{methodName}}() {
         return {{fieldName}};
     }
+{{/if}}
+
+{{#collection}}
+    public {{setterReturnType}} {{actionMethodName}}(final {{#valueTypes}}{{{.}}}{{/valueTypes}}...{{fieldName}}) {
+        if (Objects.isNull(this.{{fieldName}})) {
+            this.{{fieldName}} = new {{implementation}}<>();
+        }
+        this.{{fieldName}}.addAll(java.util.Arrays.asList({{fieldName}}));
+        return this;
+    }
+{{/collection}}
+{{#map}}
+    public {{setterReturnType}} {{actionMethodName}}({{#valueTypes}}final {{{.}}} value{{@index}}{{#unless @last}}, {{/unless}}{{/valueTypes}}) {
+        if (Objects.isNull(this.{{fieldName}})) {
+            this.{{fieldName}} = new {{implementation}}<>();
+        }
+        this.{{fieldName}}.put(value0, value1);
+        return this;
+    }
+{{/map}}
 
 {{#unless immutable}}
     public {{setterReturnType}} {{setterMethodName}}(final {{{returnType}}} {{fieldName}}) {

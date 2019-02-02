@@ -1,4 +1,4 @@
-package me.philcali.zero.lombok.processor;
+package me.philcali.zero.lombok.processor.context;
 
 import java.util.function.Function;
 
