@@ -1,0 +1,10 @@
+package {{packageName}};
+import java.util.Objects;
+
+public class {{simpleName}} implements {{elementName}} {
+{{#Methods}}{{{.}}}{{/Methods}}
+{{#Constructors}}{{{.}}}{{/Constructors}}
+{{#ToString}}{{{.}}}{{/ToString}}
+{{#EqualsAndHashCode}}{{{.}}}{{/EqualsAndHashCode}}
+{{#Builder}}{{{.}}}{{/Builder}}
+}

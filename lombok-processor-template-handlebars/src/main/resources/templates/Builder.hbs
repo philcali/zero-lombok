@@ -1,0 +1,23 @@
+    private {{simpleName}}(final Builder builder) {
+{{#fields}}
+        this.{{fieldName}} = builder.{{fieldName}};
+
+{{/fields}}
+    }
+
+    public static final class Builder {
+{{#Methods}}
+    {{{.}}}
+{{/Methods}}
+        public {{elementName}} build() {
+{{#fields}}{{#required}}
+            Objects.requireNonNull({{fieldName}}, "{{message}}");
+{{/required}}{{/fields}}
+            return new {{simpleName}}(this);
+        }
+        {{#ToString}}{{{.}}}{{/ToString}}
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }

@@ -7,8 +7,8 @@
     <artifactId>lombok</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>lombok-processor</artifactId>
-  <name>lombok-processor</name>
+  <artifactId>lombok-processor-context</artifactId>
+  <name>lombok-processor-context</name>
   <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,17 +16,17 @@
   <dependencies>
     <dependency>
       <groupId>${project.parent.groupId}</groupId>
-      <artifactId>lombok-processor-context</artifactId>
+      <artifactId>lombok-annotation</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.parent.groupId}</groupId>
-      <artifactId>lombok-processor-template-handlebars</artifactId>
+      <artifactId>lombok-processor-template</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.parent.groupId}</groupId>
-      <artifactId>lombok-processor-mapping-collection</artifactId>
+      <artifactId>lombok-processor-mapping</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>

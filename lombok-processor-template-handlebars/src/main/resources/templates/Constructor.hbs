@@ -1,0 +1,12 @@
+    public {{simpleName}}(
+{{#fields}}{{#if output}}
+        {{#unless @first}}, {{/unless}}final {{{returnType}}} {{fieldName}}
+
+{{/if}}{{/fields}}
+    ) {
+{{#fields}}{{#if output}}
+{{#if required}}        Objects.requireNonNull({{fieldName}}, "{{message}}");{{/if}}
+        this.{{fieldName}} = {{fieldName}};
+
+{{/if}}{{/fields}}
+    }
