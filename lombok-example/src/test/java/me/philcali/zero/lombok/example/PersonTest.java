@@ -11,7 +11,6 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PersonTest {
@@ -37,7 +36,7 @@ public class PersonTest {
     public void testJacksonIntegration() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         final String json = mapper.writeValueAsString(person);
-        final String expectedJson = "{\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"age\":99}";
+        final String expectedJson = "{\"created\":" + Person.DEFAULT_CREATED + ",\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"age\":99}";
         assertEquals(expectedJson, json);
         final Person otherPerson = mapper.readValue(json, Person.class);
         assertEquals(person, otherPerson);

@@ -15,6 +15,7 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 
@@ -25,6 +26,7 @@ import me.philcali.zero.lombok.annotation.ConcreteTypes;
 import me.philcali.zero.lombok.processor.context.DataContext;
 import me.philcali.zero.lombok.processor.context.ProcessorContext;
 import me.philcali.zero.lombok.processor.context.StringUtil;
+import me.philcali.zero.lombok.processor.context.exception.ProcessContextException;
 import me.philcali.zero.lombok.processor.mapping.TypeMapping;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingBasic;
 import me.philcali.zero.lombok.processor.mapping.TypeMappingProvider;
@@ -63,13 +65,22 @@ public class MethodDataContext implements DataContext {
                 .filter(builder -> Objects.nonNull(context.getParentContext()))
                 .map(Builder::value)
                 .orElse(Builder.Type.SETTER);
+        final Map<String, VariableElement> defaultValues = getDefaultValues(context);
         final TypeMappingProvider typeProvider = decorateTypeProvider(context.getElement());
+        if (!context.getFields().keySet().containsAll(defaultValues.keySet())) {
+            throw new ProcessContextException("Default value set " + defaultValues.keySet()
+            + " does not match field set" + context.getFields().keySet());
+        }
         context.getFields().forEach((fieldName, method) -> {
             final Map<String, Object> templateContext = new HashMap<>();
             templateContext.put("fieldName", fieldName);
             templateContext.put("methodName", method.getSimpleName());
             templateContext.put("returnType", method.getReturnType().toString());
             templateContext.put("setterReturnType", context.getSimpleName());
+            Optional.ofNullable(defaultValues.get(fieldName)).ifPresent(defaultValue -> {
+                templateContext.put("default", true);
+                templateContext.put("defaultValue", defaultValue.getSimpleName());
+            });
             if (Objects.isNull(context.getParentContext())) {
                 templateContext.put("contract", true);
             } else {
@@ -102,6 +113,35 @@ public class MethodDataContext implements DataContext {
             methods.add(engine.apply(TEMPLATE_NAME, templateContext));
         });
         return methods;
+    }
+
+    private String getDefaultElementName(final VariableElement field) {
+        final Builder.Default builderName = field.getAnnotation(Builder.Default.class);
+        String defaultName = builderName.value();
+        if (defaultName.isEmpty()) {
+            final String[] parts = field.getSimpleName().toString()
+                    .replaceAll("DEFAULT_", "")
+                    .toLowerCase()
+                    .split("_");
+            final String[] convertedParts = new String[parts.length];
+            for (int index = 0; index < parts.length; index++) {
+                String part = parts[index];
+                if (index > 0) {
+                    part = StringUtil.applyCase(Character::toUpperCase, part);
+                }
+                convertedParts[index] = part;
+            }
+            defaultName = String.join("", convertedParts);
+        }
+        return defaultName;
+    }
+
+    private Map<String, VariableElement> getDefaultValues(final ProcessorContext context) {
+        return context.getElement().getEnclosedElements().stream()
+                .filter(e -> e.getKind() == ElementKind.FIELD)
+                .map(e -> (VariableElement) e)
+                .filter(e -> Objects.nonNull(e.getAnnotation(Builder.Default.class)))
+                .collect(Collectors.toMap(this::getDefaultElementName, Function.identity()));
     }
 
     @SuppressWarnings("unchecked")

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 public class ProcessorContext {
@@ -73,6 +74,7 @@ public class ProcessorContext {
             return element.getEnclosedElements().stream()
                     .filter(method -> method.getKind() == ElementKind.METHOD)
                     .map(e -> (ExecutableElement) e)
+                    .filter(e -> !e.getModifiers().contains(Modifier.DEFAULT))
                     .collect(Collectors.toMap(
                             e -> StringUtil.applyCase(Character::toLowerCase, e.getSimpleName().toString().replaceAll("^(get|is)", "")),
                             Function.identity()));

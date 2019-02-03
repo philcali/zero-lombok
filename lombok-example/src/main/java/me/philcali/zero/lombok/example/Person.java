@@ -13,12 +13,16 @@ import me.philcali.zero.lombok.annotation.NonNull;
 // Use a builder if there are required things
 @JsonDeserialize(builder = PersonData.Builder.class)
 public interface Person {
+    @Builder.Default long DEFAULT_CREATED = System.currentTimeMillis();
+
     @NonNull
     String getName();
 
     int getAge();
 
     boolean isDead();
+
+    long getCreated();
 
     List<String> getScopes();
 

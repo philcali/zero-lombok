@@ -22,6 +22,7 @@ public interface ConstructorDataContext extends DataContext {
         templateContext.put("simpleName", context.getSimpleName());
         templateContext.put("fields", context.getFields().entrySet().stream()
                 .map(this::createFieldContext)
+                .sorted((left, right) -> Boolean.compare(right.isRequired(), left.isRequired()))
                 .collect(Collectors.toList()));
         return engine.apply(TEMPLATE_NAME, templateContext);
     }

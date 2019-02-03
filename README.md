@@ -223,6 +223,40 @@ final Person person = PersonData.builder()
     .build();
 ```
 
+## What about default values?
+
+No problem! Default values should be known, and as such, you can use them to
+map to generated fields
+
+``` java
+@Data @Builder
+public interface Person {
+    @Builder.Default long DEFAULT_CREATED = System.currentTimeMillis();
+
+    long getCreated();
+
+    @NonNull
+    String getName();
+}
+```
+
+The field mapping occurs by the field name, with the `DEFAULT_` prefix stripped.
+You can override the name though:
+
+``` java
+@Data @Builder
+public interface Person {
+    @Builder.Default("birthDate") long DEFAULT_CREATED = System.currentTimeMillis();
+
+    long getBirthDate();
+
+    @NonNull
+    String getName();
+}
+```
+
+An inconsistent mapping will actually *fail* the build.
+
 ## What about serialization?
 
 Works out of the box! The `lombok-example` package demonstrates how a single anntation will facilitate
@@ -250,7 +284,7 @@ public interface Person {
 
 Done-zo!
 
-## What about the generated Code Template?
+## What about the generated code template?
 
 The `zero-lombok` implementation used a pluggable template system, with
 the default implementation being `lombok-processor-template-handlebars`.

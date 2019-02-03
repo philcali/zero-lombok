@@ -24,4 +24,10 @@ public @interface Builder {
     }
 
     Type value() default Type.FLUENT;
+
+    @Retention(RetentionPolicy.SOURCE)
+    @Target(ElementType.FIELD)
+    @interface Default {
+        String value() default "";
+    }
 }
