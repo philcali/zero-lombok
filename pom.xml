@@ -19,6 +19,28 @@
     <module>lombok-processor-mapping-collection</module>
     <module>lombok-processor-context</module>
   </modules>
+  
+  
+  <build>
+     <extensions>
+        <extension>
+            <groupId>com.gkatzioura.maven.cloud</groupId>
+            <artifactId>s3-storage-wagon</artifactId>
+            <version>1.0</version>
+        </extension>
+     </extensions>
+  </build>
+  
+  <distributionManagement>
+    <snapshotRepository>
+        <id>me.philcali.maven.snapshot</id>
+        <url>s3://philcali.me/projects/snapshot</url>
+    </snapshotRepository>
+    <repository>
+        <id>me.philcali.maven.release</id>
+        <url>s3://philcali.me/projects/release</url>
+    </repository>
+</distributionManagement>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -257,6 +257,5 @@ the default implementation being `lombok-processor-template-handlebars`.
 
 There different ways to override the generated Java source with the template.
 
-- Per interface override
-
-
+- `@Template` annotation on your interface contract, specifying the template root
+- Provide your own template context to existing templates, using the `ServiceLoader` technique
