@@ -257,6 +257,34 @@ public interface Person {
 
 An inconsistent mapping will actually *fail* the build.
 
+## What about inherited types?
+
+Not every data type hierarchy can be flat, and that's OK. The `zero-lombok` library
+will consider this case, and still generate source compatible POJO's. For example:
+
+Let's define the `Person` contract.
+
+``` java
+@Data
+public interface Person {
+    @NonNull
+    String getName();
+}
+```
+
+Now, we need to represent `Employee`s as people too. You might define it thusly:
+
+``` java
+@Data
+public interface Employee extends Person {
+    @NonNull
+    String getId();
+}
+```
+
+Note that the `name` was required for a `Person` contract, which is true for an
+`Employee` as well. The `id` field is additionally required for `Employee`s.
+
 ## What about serialization?
 
 Works out of the box! The `lombok-example` package demonstrates how a single anntation will facilitate

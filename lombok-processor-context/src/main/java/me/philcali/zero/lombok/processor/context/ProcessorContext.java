@@ -5,11 +5,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 
 public class ProcessorContext {
     private final String elementName;
@@ -70,8 +74,19 @@ public class ProcessorContext {
             return element.getSimpleName().toString();
         }
 
+        private Stream<Element> getTypeHierarchy(final TypeElement elem) {
+            return Stream.concat(Stream.of(elem), elem.getInterfaces().stream()
+                    .filter(type -> type.getKind() == TypeKind.DECLARED)
+                    .map(type -> (DeclaredType) type)
+                    .map(DeclaredType::asElement)
+                    .filter(e -> e.getKind() == ElementKind.INTERFACE)
+                    .map(e -> (TypeElement) e)
+                    .flatMap(this::getTypeHierarchy));
+        }
+
         private Map<String, ExecutableElement> getDefaultFields() {
-            return element.getEnclosedElements().stream()
+            return getTypeHierarchy(element)
+                    .flatMap(e -> e.getEnclosedElements().stream())
                     .filter(method -> method.getKind() == ElementKind.METHOD)
                     .map(e -> (ExecutableElement) e)
                     .filter(e -> !e.getModifiers().contains(Modifier.DEFAULT))
