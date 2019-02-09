@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -24,8 +23,8 @@ import javax.tools.JavaFileObject;
 
 import com.google.auto.service.AutoService;
 
+import me.philcali.template.annotation.Template;
 import me.philcali.template.api.TemplateEngine;
-import me.philcali.template.api.TemplateEngineComposite;
 import me.philcali.template.api.TemplateEngineProvider;
 import me.philcali.template.api.TemplateEngineProviderSystem;
 import me.philcali.template.api.exception.TemplateNotFoundException;
@@ -34,7 +33,6 @@ import me.philcali.zero.lombok.annotation.Builder;
 import me.philcali.zero.lombok.annotation.Data;
 import me.philcali.zero.lombok.annotation.NoArgsConstructor;
 import me.philcali.zero.lombok.annotation.RequiredArgsConstructor;
-import me.philcali.zero.lombok.annotation.Template;
 import me.philcali.zero.lombok.processor.context.ProcessorContext;
 import me.philcali.zero.lombok.processor.context.ProcessorContextProvider;
 import me.philcali.zero.lombok.processor.context.ProcessorContextProviderSystem;
@@ -78,7 +76,7 @@ public class POJOProcessor extends AbstractProcessor {
     private void createDataObject(final TypeElement element) {
         final String className = String.format("%sData", element.getQualifiedName());
         try {
-            final TemplateEngine engine = objectTemplate(element);
+            final TemplateEngine engine = templates.get(element.getAnnotation(Template.class));
             final JavaFileObject object = processingEnv.getFiler().createSourceFile(className, element);
             try (PrintWriter writer = new PrintWriter(object.openWriter())) {
                 final String result = contextProvider.get(generateContext(className, element), engine);
@@ -98,17 +96,6 @@ public class POJOProcessor extends AbstractProcessor {
                 .withSimpleName(simpleName)
                 .withPackageName(packageName)
                 .build();
-    }
-
-    private TemplateEngine objectTemplate(final TypeElement element) {
-        final Template template = element.getAnnotation(Template.class);
-        if (Objects.nonNull(template)) {
-            TemplateEngine engine = new TemplateEngineComposite(templates.get(template.value()));
-            engine.templatePrefix(template.location());
-            engine.templatePrefix(Template.DEFAULT_LOCATION);
-            return engine;
-        }
-        return templates.get(Template.DEFAULT_ENGINE);
     }
 
     @Override
