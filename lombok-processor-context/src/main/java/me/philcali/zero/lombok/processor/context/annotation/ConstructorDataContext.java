@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import me.philcali.template.api.TemplateEngine;
 import me.philcali.zero.lombok.processor.context.DataContext;
 import me.philcali.zero.lombok.processor.context.ProcessorContext;
-import me.philcali.zero.lombok.processor.template.TemplateEngine;
 
 public interface ConstructorDataContext extends DataContext {
     String TEMPLATE_NAME = "Constructor";

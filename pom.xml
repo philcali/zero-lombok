@@ -13,8 +13,6 @@
     <module>lombok-annotation</module>
     <module>lombok-example</module>
     <module>lombok-processor</module>
-    <module>lombok-processor-template</module>
-    <module>lombok-processor-template-handlebars</module>
     <module>lombok-processor-mapping</module>
     <module>lombok-processor-mapping-collection</module>
     <module>lombok-processor-context</module>

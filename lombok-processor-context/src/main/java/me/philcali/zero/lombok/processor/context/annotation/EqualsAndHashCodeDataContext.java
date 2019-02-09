@@ -7,11 +7,11 @@ import java.util.stream.Collectors;
 
 import com.google.auto.service.AutoService;
 
+import me.philcali.template.api.TemplateEngine;
 import me.philcali.zero.lombok.annotation.Data;
 import me.philcali.zero.lombok.annotation.EqualsAndHashCode;
 import me.philcali.zero.lombok.processor.context.DataContext;
 import me.philcali.zero.lombok.processor.context.ProcessorContext;
-import me.philcali.zero.lombok.processor.template.TemplateEngine;
 
 @AutoService(DataContext.class)
 public class EqualsAndHashCodeDataContext implements DataContext {

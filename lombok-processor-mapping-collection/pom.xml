@@ -7,9 +7,7 @@
     <artifactId>lombok</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <groupId>me.philcali.zero</groupId>
   <artifactId>lombok-processor-mapping-collection</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
   <name>lombok-processor-mapping-collection</name>
   <url>http://maven.apache.org</url>
   <properties>

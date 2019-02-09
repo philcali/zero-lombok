@@ -3,7 +3,7 @@ package me.philcali.zero.lombok.processor.context;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.philcali.zero.lombok.processor.template.TemplateEngine;
+import me.philcali.template.api.TemplateEngine;
 
 public class ProcessorContextProviderSystem implements ProcessorContextProvider {
     private static final String TEMPLATE_NAME = "Data";

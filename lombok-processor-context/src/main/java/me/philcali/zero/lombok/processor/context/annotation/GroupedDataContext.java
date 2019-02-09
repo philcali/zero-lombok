@@ -3,9 +3,9 @@ package me.philcali.zero.lombok.processor.context.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.philcali.template.api.TemplateEngine;
 import me.philcali.zero.lombok.processor.context.DataContext;
 import me.philcali.zero.lombok.processor.context.ProcessorContext;
-import me.philcali.zero.lombok.processor.template.TemplateEngine;
 
 public class GroupedDataContext implements DataContext {
     private final DataContext initialContext;

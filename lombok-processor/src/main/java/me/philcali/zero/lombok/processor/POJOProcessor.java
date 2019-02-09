@@ -24,6 +24,11 @@ import javax.tools.JavaFileObject;
 
 import com.google.auto.service.AutoService;
 
+import me.philcali.template.api.TemplateEngine;
+import me.philcali.template.api.TemplateEngineComposite;
+import me.philcali.template.api.TemplateEngineProvider;
+import me.philcali.template.api.TemplateEngineProviderSystem;
+import me.philcali.template.api.exception.TemplateNotFoundException;
 import me.philcali.zero.lombok.annotation.AllArgsConstructor;
 import me.philcali.zero.lombok.annotation.Builder;
 import me.philcali.zero.lombok.annotation.Data;
@@ -33,11 +38,6 @@ import me.philcali.zero.lombok.annotation.Template;
 import me.philcali.zero.lombok.processor.context.ProcessorContext;
 import me.philcali.zero.lombok.processor.context.ProcessorContextProvider;
 import me.philcali.zero.lombok.processor.context.ProcessorContextProviderSystem;
-import me.philcali.zero.lombok.processor.template.TemplateEngine;
-import me.philcali.zero.lombok.processor.template.TemplateEngineComposite;
-import me.philcali.zero.lombok.processor.template.TemplateEngineProvider;
-import me.philcali.zero.lombok.processor.template.TemplateEngineProviderSystem;
-import me.philcali.zero.lombok.processor.template.exception.TemplateNotFoundException;
 
 @AutoService(Processor.class)
 public class POJOProcessor extends AbstractProcessor {
@@ -68,7 +68,7 @@ public class POJOProcessor extends AbstractProcessor {
                 }
             });
         }
-        return true;
+        return !processedElements.isEmpty();
     }
 
     private boolean isInterface(final Element element) {
