@@ -89,7 +89,7 @@ public class ProcessorContext {
                     .flatMap(e -> e.getEnclosedElements().stream())
                     .filter(method -> method.getKind() == ElementKind.METHOD)
                     .map(e -> (ExecutableElement) e)
-                    .filter(e -> !e.getModifiers().contains(Modifier.DEFAULT))
+                    .filter(e -> !e.getModifiers().contains(Modifier.DEFAULT) && !e.getModifiers().contains(Modifier.STATIC))
                     .filter(e -> e.getParameters().isEmpty())
                     .collect(Collectors.toMap(
                             e -> StringUtil.applyCase(Character::toLowerCase, e.getSimpleName().toString().replaceAll("^(get|is)", "")),
