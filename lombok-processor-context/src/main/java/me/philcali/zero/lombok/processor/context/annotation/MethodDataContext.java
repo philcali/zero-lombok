@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,8 +79,12 @@ public class MethodDataContext implements DataContext {
             templateContext.put("returnType", method.getReturnType().toString());
             templateContext.put("setterReturnType", context.getSimpleName());
             Optional.ofNullable(defaultValues.get(fieldName)).ifPresent(defaultValue -> {
+                String defaultReturn = defaultValue.getSimpleName().toString();
+                if (defaultValue.asType().toString().startsWith(Supplier.class.getName())) {
+                    defaultReturn += ".get()";
+                }
                 templateContext.put("default", true);
-                templateContext.put("defaultValue", defaultValue.getSimpleName());
+                templateContext.put("defaultValue", defaultReturn);
             });
             if (Objects.isNull(context.getParentContext())) {
                 templateContext.put("contract", true);

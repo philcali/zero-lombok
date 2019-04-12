@@ -2,6 +2,7 @@ package me.philcali.zero.lombok.example;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -13,7 +14,9 @@ import me.philcali.zero.lombok.annotation.NonNull;
 // Use a builder if there are required things
 @JsonDeserialize(builder = PersonData.Builder.class)
 public interface Person {
-    @Builder.Default long DEFAULT_CREATED = System.currentTimeMillis();
+    @Builder.Default Supplier<Long> DEFAULT_CREATED = System::currentTimeMillis;
+
+    @Builder.Default int DEFAULT_AGE = 99;
 
     @NonNull
     String getName();

@@ -15,13 +15,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PersonTest {
     private Person person;
+    private long created;
 
     @Before
     public void setUp() {
+        created = Person.DEFAULT_CREATED.get();
         person = PersonData.builder()
                 .withName("Philip Cali")
                 .withDead(true)
                 .withAge(99)
+                .withCreated(created)
                 .addScopes("blue")
                 .addScopes("42")
                 .putVehicles("Old Blue", VehicleData.builder()
@@ -36,7 +39,7 @@ public class PersonTest {
     public void testJacksonIntegration() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         final String json = mapper.writeValueAsString(person);
-        final String expectedJson = "{\"created\":" + Person.DEFAULT_CREATED + ",\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"age\":99}";
+        final String expectedJson = "{\"created\":" + created + ",\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"age\":99}";
         assertEquals(expectedJson, json);
         final Person otherPerson = mapper.readValue(json, Person.class);
         assertEquals(person, otherPerson);
@@ -65,6 +68,8 @@ public class PersonTest {
         other.setDead(true);
         assertNotEquals(person, other);
         other.setAge(99);
+        assertNotEquals(person, other);
+        other.setCreated(created);
         assertNotEquals(person, other);
         other.setScopes(Arrays.asList("blue", "42"));
         assertNotEquals(person, other);
