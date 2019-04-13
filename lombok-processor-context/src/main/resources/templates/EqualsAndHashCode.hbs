@@ -4,7 +4,7 @@
             return false;
         }
         final {{elementName}} other = ({{elementName}}) object;
-        return {{#fields}}Objects.equals({{fieldName}}, other.{{methodName}}()){{#unless @last}}
+        return {{#fields}}Objects.deepEquals({{fieldName}}, other.{{methodName}}()){{#unless @last}}
             && {{/unless}}{{/fields}};
     }
 
