@@ -2,6 +2,7 @@ package me.philcali.zero.lombok.example;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public class PersonTest {
     public void testJacksonIntegration() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         final String json = mapper.writeValueAsString(person);
-        final String expectedJson = "{\"created\":" + created + ",\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"age\":99}";
+        final String expectedJson = "{\"nextOfKin\":null,\"created\":" + created + ",\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"spouse\":null,\"age\":99}";
         assertEquals(expectedJson, json);
         final Person otherPerson = mapper.readValue(json, Person.class);
         assertEquals(person, otherPerson);
@@ -53,6 +54,20 @@ public class PersonTest {
     @Test(expected = NullPointerException.class)
     public void testRequiredParamOnBuilder() {
         PersonData.builder().build();
+    }
+
+    @Test
+    public void testBuilderCopy() {
+        final Person copy = PersonData.builder(person)
+                .withName("Bob Blart")
+                .withAge(65)
+                .addScopes("another")
+                .build();
+        assertTrue(copy.isDead());
+        assertEquals(Arrays.asList("blue", "42", "another"), copy.getScopes());
+        assertEquals(person.getVehicles(), copy.getVehicles());
+        assertEquals(65, copy.getAge());
+        assertEquals("Bob Blart", copy.getName());
     }
 
     @Test

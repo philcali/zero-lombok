@@ -21,3 +21,11 @@
     public static Builder builder() {
         return new Builder();
     }
+
+    public static Builder builder(final {{elementName}} copy) {
+        final Builder builder = builder();
+{{#fields}}
+        builder.{{fieldName}} = copy.{{methodName}}();
+{{/fields}}
+        return builder;
+    }

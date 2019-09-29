@@ -91,7 +91,9 @@ public class MethodDataContext implements DataContext {
             } else {
                 if (method.getReturnType().getKind() == TypeKind.DECLARED) {
                     final DeclaredType declaredType = (DeclaredType) method.getReturnType();
-                    final Stream<TypeElement> roots = getRootInterfaces(declaredType.asElement());
+                    final Stream<TypeElement> roots = Stream.concat(
+                            getRootInterfaces(declaredType.asElement()),
+                            Stream.of((TypeElement) declaredType.asElement()));
                     roots.map(iElement -> typeProvider.get(iElement.getQualifiedName().toString()))
                     .filter(opt -> opt.isPresent())
                     .findFirst()
@@ -99,7 +101,7 @@ public class MethodDataContext implements DataContext {
                     .ifPresent(mapping -> {
                         final int lastNameDot = mapping.getContract().lastIndexOf('.');
                         final String mappingName = mapping.getContract().substring(lastNameDot + 1);
-                        templateContext.put(mappingName.toLowerCase(), true);
+                        templateContext.put(mapping.collectionType() ? "collection" : mappingName.toLowerCase(), true);
                         templateContext.put("actionMethodName", mapping.getVerb() + StringUtil.applyCase(
                                 Character::toUpperCase, fieldName));
                         templateContext.put("implementation", mapping.getImplementation());

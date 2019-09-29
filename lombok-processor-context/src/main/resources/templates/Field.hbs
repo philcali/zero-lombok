@@ -25,6 +25,12 @@
         return this;
     }
 {{/map}}
+{{#optional}}
+    public {{setterReturnType}} {{actionMethodName}}(final {{#valueTypes}}{{{.}}}{{/valueTypes}} {{fieldName}}) {
+        this.{{fieldName}} = {{implementation}}.ofNullable({{fieldName}});
+        return this;
+    }
+{{/optional}}
 
 {{#unless immutable}}
     public {{setterReturnType}} {{setterMethodName}}(final {{{returnType}}} {{fieldName}}) {

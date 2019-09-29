@@ -2,6 +2,8 @@ package me.philcali.zero.lombok.example;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -30,4 +32,8 @@ public interface Person {
     List<String> getScopes();
 
     Map<String, Vehicle> getVehicles();
+
+    Set<Person> getNextOfKin();
+
+    Optional<Person> getSpouse();
 }
