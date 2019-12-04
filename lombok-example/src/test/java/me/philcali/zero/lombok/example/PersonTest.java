@@ -40,7 +40,7 @@ public class PersonTest {
     public void testJacksonIntegration() throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
         final String json = mapper.writeValueAsString(person);
-        final String expectedJson = "{\"nextOfKin\":null,\"created\":" + created + ",\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"spouse\":null,\"age\":99}";
+        final String expectedJson = "{\"nextOfKin\":null,\"name\":\"Philip Cali\",\"vehicles\":{\"Old Blue\":{\"year\":2015,\"model\":\"Leaf\",\"make\":\"Nissan\"}},\"dead\":true,\"scopes\":[\"blue\",\"42\"],\"spouse\":null,\"age\":99,\"birthDate\":" + created + "}";
         assertEquals(expectedJson, json);
         final Person otherPerson = mapper.readValue(json, Person.class);
         assertEquals(person, otherPerson);

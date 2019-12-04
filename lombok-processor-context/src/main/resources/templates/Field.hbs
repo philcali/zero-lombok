@@ -1,3 +1,4 @@
+    {{#annotations}}{{{.}}} {{/annotations}}
     private {{#immutable}}final {{/immutable}}{{{returnType}}} {{fieldName}}{{#if default}} = {{{defaultValue}}}{{/if}};
 
 {{#if contract}}

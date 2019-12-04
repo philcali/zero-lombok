@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import me.philcali.zero.lombok.annotation.Builder;
@@ -27,6 +28,7 @@ public interface Person {
 
     boolean isDead();
 
+    @JsonProperty("birthDate")
     long getCreated();
 
     List<String> getScopes();

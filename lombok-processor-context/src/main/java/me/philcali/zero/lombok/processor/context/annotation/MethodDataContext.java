@@ -78,6 +78,9 @@ public class MethodDataContext implements DataContext {
             templateContext.put("methodName", method.getSimpleName());
             templateContext.put("returnType", method.getReturnType().toString());
             templateContext.put("setterReturnType", context.getSimpleName());
+            templateContext.put("annotations", method.getAnnotationMirrors().stream()
+                    .map(Object::toString)
+                    .collect(Collectors.toList()));
             Optional.ofNullable(defaultValues.get(fieldName)).ifPresent(defaultValue -> {
                 String defaultReturn = defaultValue.getSimpleName().toString();
                 if (defaultValue.asType().toString().startsWith(Supplier.class.getName())) {
